@@ -5,6 +5,11 @@
   "repository": "https://github.com/SohilaArafa/TypescriptTask.git",
   "author": "SohilaArafa <sohilaarafa2001@gmail.com>",
   "license": "MIT",
+  "scripts": {
+    "start": "node ./build/index.js" ,
+    "build" : "tsc -p ." ,
+    "dev" : "nodemon ./src/index.ts"
+  },
   "dependencies": {
     "@types/express": "^4.17.15",
     "@types/node": "^18.11.18",
