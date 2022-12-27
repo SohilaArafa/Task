@@ -1,0 +1,8 @@
+{
+  "name": "typescripttask",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/SohilaArafa/TypescriptTask.git",
+  "author": "SohilaArafa <sohilaarafa2001@gmail.com>",
+  "license": "MIT"
+}
