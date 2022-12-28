@@ -1,147 +1,96 @@
+import { constants } from "buffer";
 import { error } from "console";
 import express , {Request,Response} from "express";
 import * as fs from 'fs';
 
-//const fs = require('fs')
 const app = express()
-let elements = require('./db.json');
-const dataPath = './db.json' 
+const bodyParser = require('body-parser').json();
 
 
 app.listen( '3001', (): void =>{
     console.log("server is running")
 })
-
-//  get all the saved notes
+//all data
 app.get('/db', function(req : Request, res : Response) {
-   const f =  tryr()
-  return res.send(elements);
-});
-
-
-app.delete('/db/delete' , (req,res) => {
-    elements = []
-    return res.send(elements)
-})
-
-const tryr =  ( async() =>   {
-await fs.readFile('db.json', 'utf8', (err : any, data : any) => {
-  if (err) {
-    // handle the error
-    throw error
-  }
-  const d = data;
-  console.log(d)
-});
-} )
-
-
-const saveAccountData = (data : any) => {
-    const stringifyData = JSON.stringify(data)
-    fs.writeFileSync(dataPath, stringifyData)
-}
-
-const getAccountData = () => {
-    const jsonData = fs.readFileSync(dataPath)
-  //  return JSON.parse(jsonData)    
-}
-
-
-//get all the data
-const getData = () => {
-    const jsonData = fs.readFileSync('db.json')
-  //  return JSON.parse(jsonData)    
-}
-//write new data in json
-const saveUserData = (data : any) => {
-    const stringifyData = JSON.stringify(data)
-    fs.writeFileSync('db.json', stringifyData)
-}
-
-app.post('/db/addN' ,(req: Request , res : Response) => {
-//access file --> dats is raw --> change to json format
-
-    const dataa = req.body
-    const d = JSON.parse(dataa)
-    console.log(d)
-    //var data = fs.readFileSync('./db.json');
-    //var myObject= JSON.parse(data);
-//
-    //const {title,Description,Date,Priority} = req.body
-    console.log("ok")
-
-
-} )
-
-
-//app.post('/db/add' , (req: Request , res : Response) => {
-//
-////access file --> dats is raw --> change to json format
-//    var data = fs.readFileSync('db.json');
-//    var myObject= JSON.parse(data);
-//
-//    const noteID = Math.floor(100000 + Math.random() * 900000)
-//    const {title,Description,Date,Priority} = req.params
-//    console.log(title,Description,Date,Priority)
-//    let newData = {
-//        "id": noteID
-//    }  
-//
-//    myObject.push(newData);
-//
-//    let newwData = JSON.stringify(myObject);
-//    fs.writeFile('data.json', newwData );   
-
-
-  
-//}  )
-
-
-
-app.post('/db/neww', (req : Request, res : Response) => {
-   
-    var existAccounts = getAccountData()
-    const newAccountId = Math.floor(100000 + Math.random() * 900000)
-   
- //   existAccounts[newAccountId] = req.body
-     
-    console.log(existAccounts);
-
-    saveAccountData(existAccounts);
-    res.send({success: true, msg: 'account data added successfully'})
-})
-
-app.post('/db/new', (req : Request, res : Response) => {
-
-    const id  = Math.floor(100000 + Math.random() * 900000)
-    const addID = JSON.stringify(id)
-
-    const newData = req.body
-
-    //check if the userData fields are missing
-    if (newData.title == null || newData.Description == null || newData.Date == null || newData.Priority == null) {
-        return res.status(401).send({error: true, msg: 'User data missing'})
+  fs.readFile('db.json', (err : any, data : any) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      const json = JSON.parse(data); //array of objects
+      console.log(json)
+      return res.send(json)
     }
-      
-    elements.push(newData,addID)
+});
+})
+// read all ascendingly by either type = date , type = title , type = priority
+app.get('/db/:type', function(req : Request, res : Response) {
+  let{type} = req.params;
+  console.log(type)
+  fs.readFile('db.json', (err : any, data : any) => {
+    let myData = {}
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      const json = JSON.parse(data); //array of objects
+      if(type === 'priority') {
+      // sort ascendingly by the priority
+      let sortedPriority = json.sort( (p1 : any, p2 : any) => (p1.priority > p2.priority) ? 1 : (p1.priority < p2.priority) ? -1 : 0);
+      console.log(sortedPriority)
+       return res.send(sortedPriority)
+      }
 
-    res.send(id)
+      //sort title ascendingly
+      if(type === 'title') {
+      let sortedTitles = json.sort(function(a : any , b : any) {
+        const nameA = a.title.toUpperCase(); // ignore upper and lowercase
+        const nameB = b.title.toUpperCase(); // ignore upper and lowercase
+          
+      // sort in an ascending order
+        if (nameA < nameB) {
+          return -1;
+        }
+        if (nameA > nameB) {
+          return 1;
+        }
+        // names must be equal
+        return 0;
+      });
+      console.log(sortedTitles)
+      return res.send(sortedTitles)
+
+    }
+
+    if(type === 'date') {
+      // sorting dates ascendingly
+      let sortedDates= json.sort((x : any, y : any) => {
+             x = new Date(x.Date),
+            y = new Date(y.Date);
+             return x - y;
+});
+  console.log(sortedDates)
+     res.send(sortedDates)
+    }
+
+ 
+    }
+});
 })
 
-//const data = fs.readFileSync('./db.json');
-
-// parse the JSON data
-//const json = JSON.parse(data);
-//console.log(json)
-
-app.post('/', (req, res) => {
+//add new note
+app.post('/db/new',bodyParser, (req, res) => {
   // Read the JSON file, add a new entry, and write the updated object back to the file
+  const noteID = Math.floor(100000 + Math.random() * 900000)
+
   fs.readFile('db.json', (err : any, data : any) => {
     if (err) {
       res.status(500).send(err);
     } else {
       const json = JSON.parse(data);
-      json.push(req.body);
+      //console.log(json)
+      const temp = req.body
+      const t = {...temp , "id" : noteID}
+     // console.log(t)
+      json.push(t);
       fs.writeFile('db.json', JSON.stringify(json), (err:any) => {
         if (err) {
           res.status(500).send(err);
@@ -152,68 +101,113 @@ app.post('/', (req, res) => {
     }
   });
 });
-
-//app.put('/:id', (req, res) => {
-//  // Read the JSON file, update the specified entry, and write the updated object back to the file
-//  fs.readFile('data.json', (err, data) => {
-//    if (err) {
-//      res.status(500).send(err);
-//    } else {
-//      const json = JSON.parse(data);
-//      const index = json.findIndex((item) => item.id === req.params.id);
-
-
-
-
-//app.get('/db/:id', (req : Request, res : Response) => {
-//  const{id} = req.params
-//  let found = elements.find( x : any  => x.id === parseInt(req.params.id));
-//  let jsonString = JSON.stringify(found);
-//  res.send(jsonString);
-//});
-
-
-//  get a certain note
-//app.get('/db/:id', function(req : Request, res : Response) {
-//  const { id } = req.params;  //id in the request
-//  var file_content = fs.readFileSync(filename);
-//  return res.send(elements[id]);
-//  var content = JSON.parse(file_content);
-//
-//});
-
-//app.patch('/db/update/:priority',function(req : Request, res : Response) {
-//    //find the element
-//    return res.send()
-//}   )
-
-
-//app.delete('/db', function(req : Request, res : Response) {
-//  elements = []
-//  const { id } = req.params;
-//  return res.send(elements[id]);
-//});
-
-
-
-
-// delete - using delete method
-//app.delete('/db/delete/:id', (req : Request, res : Response) => {
-//  fs.readFile(dataPath, 'utf8', (err, data) => {
-//    var existAccounts = getAccountData()
-//    const userId = req.params['id'];
-//    delete existAccounts[userId]; 
-//    saveAccountData(existAccounts);
-//    res.send(`accounts with id ${userId} has been deleted`)
-//  }, true);
-//})
-//
-//
-app.post('/db/new', (req, res) => {
- 
-    const id  = Math.floor(100000 + Math.random() * 900000)
-
- 
-   
-    res.send({success: true, msg: 'account added successfully'})
+//get a specific note
+app.get('/:id' , (req : Request ,res : Response) => {
+  const{id} = req.params;
+  console.log(id)
+  let myData = {}
+  fs.readFile('db.json', (err : any, data : any) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      const json = JSON.parse(data); //array of objects
+      
+      json?.map( (item : any) => {
+          if( item.id == id){
+            console.log("true")
+            myData = item
+            console.log(myData)
+          return res.send(myData);     
+    }
+      })
+    }
+  });
 })
+
+//update an existing note
+app.put('./update/:id' , bodyParser, ( req : Request ,  res : Response) => {
+  const{id} = req.params;
+  let myData = {}
+  const temp = req.body;
+
+    fs.readFile('db.json', (err : any, data : any) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      const json = JSON.parse(data); //array of objects
+      
+      json?.map( (item : any) => {  //item to update saved in myData
+          if( item.id == id){
+            myData = item
+          }
+      })
+      
+      const temp = req.body  //new variable  ex "title"
+      myData = {...myData, temp}
+      console.log(myData)
+     // const t = {...temp , "id" : noteID}
+     // console.log(t)
+      json.push(myData);
+
+      fs.writeFile('db.json', JSON.stringify(json), (err:any) => {
+        if (err) {
+          res.status(500).send(err);
+        } else {
+          res.send('Success');
+        }
+      });      
+
+
+
+    }
+  });
+
+}   )
+
+
+
+//delete one
+app.delete('./delete/:id' , (req : Request , res : Response) => {
+  const{id} = req.params;
+  let myData = {}
+  console.log(id)
+  fs.readFile('db.json', (err : any, data : any) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      let json = JSON.parse(data);     //array of objects
+      console.log("recieved json" , json)
+    //  const found = json?.map( (item : any) => {   //found an item to delete
+    //      if( item.id == id){  
+    //      }})
+    
+      json =  json.filter((item : any) => {
+          item.id !== id
+        })
+      console.log(json)
+   //   fs.writeFile('db.json', JSON.stringify(json), (err:any) => {
+   //     if (err) {
+   //       res.status(500).send(err);
+   //     } else {
+   //       res.send('Success');
+   //     }
+   //   });
+
+    }
+  })
+     
+  });
+
+
+
+
+
+
+
+
+
+
+
+//const test = [6,3,6,500,1]
+//test.sort(function(a, b){return a-b});
+//console.log(test)
