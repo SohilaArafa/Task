@@ -124,6 +124,50 @@ app.get('/:id' , (req : Request ,res : Response) => {
   });
 })
 
+app.patch('./updates/:id' , bodyParser, ( req : Request ,  res : Response) => {
+  const{id} = req.params;
+  let myData = {}
+  const temp = req.body;   //title
+  console.log(temp)
+  console.log(id)
+
+ //   fs.readFile('db.json', (err : any, data : any) => {
+ //   if (err) {
+ //     res.status(500).send(err);
+ //   } else {
+ //     const json = JSON.parse(data); //array of objects
+ //     
+ //     json?.map( (item : any) => {  //item to update saved in myData
+ //         if( item.id == id){
+ //           myData = item
+ //         }
+ //     })
+      return res.send("Success")
+      
+//      const temp = req.body  //new variable  ex "title"
+//      myData = {...myData, temp}
+//      console.log(myData)
+//     // const t = {...temp , "id" : noteID}
+//     // console.log(t)
+//      json.push(myData);
+//
+//      fs.writeFile('db.json', JSON.stringify(json), (err:any) => {
+//        if (err) {
+//          res.status(500).send(err);
+//        } else {
+//          res.send('Success');
+//        }
+//      });      
+//
+
+
+//    }
+//  });
+
+}   )
+
+
+
 //update an existing note
 app.put('./update/:id' , bodyParser, ( req : Request ,  res : Response) => {
   const{id} = req.params;
